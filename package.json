@@ -12,12 +12,10 @@
     "docker:down": "docker-compose down"
   },
   "dependencies": {
-    "@auth/mongodb-adapter": "^3.7.1",
     "@types/leaflet-draw": "^1.0.11",
     "daisyui": "^4.12.12",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
-    "mongodb": "^6.9.0",
     "next": "14.2.13",
     "next-auth": "^4.24.8",
     "react": "^18.3.1",
