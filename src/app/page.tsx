@@ -2,7 +2,6 @@
 
 import React from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import largeLogo from '@/assets/agLogoHero.png'
 
 const HomePage = () => {
@@ -24,11 +23,6 @@ const HomePage = () => {
           <p className='text-xl md:text-2xl text-background mb-8'>
             Your partner in agricultural innovation
           </p>
-          <Link
-            href='/signup'
-            className='btn bg-primary text-background btn-lg text-xl'>
-            Get Started
-          </Link>
         </div>
       </section>
 
