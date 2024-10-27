@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #83BDB6; /* Light Blue-Green */
+  --foreground: #150031; /* Dark Purple */
+  --primary: #006400; /* Dark Green */
+  --accent: #F27655; /* Coral */
+  --secondary: #75EA74; /* Light Green */
+  --navbar-footer-bg: #006400; /* Dark Green */
+  --navbar-footer-text: #FFFFFF; /* White */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  font-family: 'Merriweather', serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
