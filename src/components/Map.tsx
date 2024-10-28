@@ -25,9 +25,9 @@ const Map = ({ geoJSONData }: MapProps) => {
     useState<GeoJSON.Feature | null>(null)
   const geoJSONRef = useRef<L.GeoJSON | null>(null)
 
-  const resetHighlight = useCallback((e: L.LeafletEvent) => {
+  const resetHighlight = useCallback((layer: L.Layer) => {
     if (geoJSONRef.current) {
-      geoJSONRef.current.resetStyle(e.target)
+      geoJSONRef.current.resetStyle(layer)
     }
   }, [])
 
@@ -47,12 +47,12 @@ const Map = ({ geoJSONData }: MapProps) => {
         mouseover: highlightFeature,
         mouseout: (e) => {
           if (feature !== selectedFeature) {
-            resetHighlight(e)
+            resetHighlight(e.target)
           }
         },
         click: (e) => {
           if (selectedFeature) {
-            resetHighlight({ target: e.target })
+            resetHighlight(e.target)
           }
           setSelectedFeature(feature)
           highlightFeature(e)
@@ -64,16 +64,21 @@ const Map = ({ geoJSONData }: MapProps) => {
 
   const getFeatureCenter = (feature: GeoJSON.Feature): [number, number] => {
     try {
-      const center = turf.center(feature)
+      const center = turf.centroid(feature)
       return [center.geometry.coordinates[1], center.geometry.coordinates[0]]
     } catch (error) {
       console.error('Error calculating center:', error)
-      // Use proper typing for the coordinates
-      const coordinates =
-        feature.geometry.type === 'Polygon'
-          ? (feature.geometry.coordinates[0][0] as [number, number])
-          : [0, 0]
-      return L.GeoJSON.coordsToLatLng(coordinates)
+      if (
+        feature.geometry.type === 'Polygon' &&
+        feature.geometry.coordinates[0]?.[0]?.length >= 2
+      ) {
+        // Directly return lat/lng from first coordinate
+        return [
+          feature.geometry.coordinates[0][0][1],
+          feature.geometry.coordinates[0][0][0],
+        ]
+      }
+      return [0, 0]
     }
   }
 
@@ -102,11 +107,13 @@ const Map = ({ geoJSONData }: MapProps) => {
       {selectedFeature && (
         <Popup
           position={getFeatureCenter(selectedFeature)}
-          onClose={() => {
-            setSelectedFeature(null)
-            if (geoJSONRef.current) {
-              geoJSONRef.current.resetStyle()
-            }
+          eventHandlers={{
+            remove: () => {
+              setSelectedFeature(null)
+              if (geoJSONRef.current) {
+                geoJSONRef.current.resetStyle()
+              }
+            },
           }}>
           <div className='p-2'>
             <h3 className='font-bold mb-2'>
