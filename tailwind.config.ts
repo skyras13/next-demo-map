@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss'
+import daisyui from 'daisyui'
 
 const config: Config = {
   content: [
@@ -24,7 +25,7 @@ const config: Config = {
     },
   },
   plugins: [
-    require('daisyui'), // Add DaisyUI as a plugin
+    daisyui, // Use the imported daisyui instead of require
   ],
 }
 

@@ -8,7 +8,7 @@ import * as turf from '@turf/turf'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 
-let DefaultIcon = L.icon({
+const DefaultIcon = L.icon({
   iconUrl: icon.src,
   shadowUrl: iconShadow.src,
 })
@@ -68,10 +68,12 @@ const Map = ({ geoJSONData }: MapProps) => {
       return [center.geometry.coordinates[1], center.geometry.coordinates[0]]
     } catch (error) {
       console.error('Error calculating center:', error)
-      // Fallback to first coordinate if center calculation fails
-      return L.GeoJSON.coordsToLatLng(
-        (feature.geometry as any).coordinates[0][0]
-      )
+      // Use proper typing for the coordinates
+      const coordinates =
+        feature.geometry.type === 'Polygon'
+          ? (feature.geometry.coordinates[0][0] as [number, number])
+          : [0, 0]
+      return L.GeoJSON.coordsToLatLng(coordinates)
     }
   }
 
