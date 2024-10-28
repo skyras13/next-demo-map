@@ -64,7 +64,18 @@ const Map = ({ geoJSONData }: MapProps) => {
 
   const getFeatureCenter = (feature: GeoJSON.Feature): [number, number] => {
     try {
-      const center = turf.centroid(feature)
+      // Calculate the bounding box of the feature
+      const bbox = turf.bbox(feature)
+
+      // Create a feature collection with the bboxPolygon
+      const bboxPolygon = turf.bboxPolygon(bbox)
+      const featureCollection: GeoJSON.FeatureCollection = {
+        type: 'FeatureCollection',
+        features: [bboxPolygon],
+      }
+
+      // Get the center of the feature collection
+      const center = turf.center(featureCollection)
       return [center.geometry.coordinates[1], center.geometry.coordinates[0]]
     } catch (error) {
       console.error('Error calculating center:', error)
@@ -72,7 +83,6 @@ const Map = ({ geoJSONData }: MapProps) => {
         feature.geometry.type === 'Polygon' &&
         feature.geometry.coordinates[0]?.[0]?.length >= 2
       ) {
-        // Directly return lat/lng from first coordinate
         return [
           feature.geometry.coordinates[0][0][1],
           feature.geometry.coordinates[0][0][0],
@@ -116,7 +126,7 @@ const Map = ({ geoJSONData }: MapProps) => {
             },
           }}>
           <div className='p-2'>
-            <h3 className='font-bold mb-2'>
+            <h3 className='font-bold mb-2 text-lg'>
               {selectedFeature.properties?.NAME}
             </h3>
             {selectedFeature.properties?.STATE && (
