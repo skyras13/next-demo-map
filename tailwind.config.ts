@@ -9,8 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        serif: ['Merriweather', 'serif'],
-        sans: ['Roboto', 'Arial', 'sans-serif'],
+        sans: ['Merriweather', 'Arial', 'sans-serif'],
       },
       colors: {
         primary: '#006400', // Dark Green

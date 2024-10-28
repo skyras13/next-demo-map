@@ -3,7 +3,6 @@
 import React from 'react'
 import Image from 'next/image'
 import largeLogo from '@/assets/agLogoHero.png'
-
 const HomePage = () => {
   return (
     <div className='flex flex-col min-h-screen'>

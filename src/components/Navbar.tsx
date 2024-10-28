@@ -5,11 +5,13 @@ import logo from '@/assets/agLogoNav1.png'
 
 const Navbar = () => {
   return (
-    <div className='navbar bg-background text-text font-serif px-8'>
+    <div className='navbar bg-background text-text font-sans px-8 border-b border-primary'>
       <div className='navbar-start'>
         <Link href='/' className='normal-case text-xl'>
           <Image src={logo} alt='AG Genius Logo' width={400} height={100} />
         </Link>
+      </div>
+      <div className='navbar-end'>
         <ul className='menu menu-horizontal px-1'>
           <li>
             <Link
