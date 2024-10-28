@@ -24,6 +24,22 @@ const Map = ({ geoJSONData }: MapProps) => {
   const [selectedFeature, setSelectedFeature] =
     useState<GeoJSON.Feature | null>(null)
   const geoJSONRef = useRef<L.GeoJSON | null>(null)
+  // Default style
+  const defaultStyle = {
+    color: '#4682B4', // Steel blue - more professional and visible on satellite
+    weight: 2,
+    fillColor: '#6495ED', // Cornflower blue fill
+    fillOpacity: 0.2,
+  }
+
+  // Highlight style (for hover and selection)
+  const highlightStyle = {
+    weight: 3,
+    color: '#006400', // Dark green border for better visibility on satellite
+    fillColor: '#90EE90', // Light green fill that stands out but isn't too bright
+    fillOpacity: 0.4,
+    dashArray: '',
+  }
 
   const resetHighlight = useCallback((layer: L.Layer) => {
     if (geoJSONRef.current) {
@@ -33,29 +49,33 @@ const Map = ({ geoJSONData }: MapProps) => {
 
   const highlightFeature = useCallback((e: L.LeafletEvent) => {
     const layer = e.target
-    layer.setStyle({
-      weight: 3,
-      color: '#666',
-      fillOpacity: 0.2,
-    })
+    layer.setStyle(highlightStyle)
     layer.bringToFront()
   }, [])
 
   const onEachFeature = useCallback(
     (feature: GeoJSON.Feature, layer: L.Layer) => {
       layer.on({
-        mouseover: highlightFeature,
+        mouseover: (e) => {
+          if (feature !== selectedFeature) {
+            highlightFeature(e)
+          }
+        },
         mouseout: (e) => {
           if (feature !== selectedFeature) {
             resetHighlight(e.target)
           }
         },
         click: (e) => {
-          if (selectedFeature) {
-            resetHighlight(e.target)
+          // Reset previous selection if it exists
+          if (selectedFeature && geoJSONRef.current) {
+            geoJSONRef.current.resetStyle()
           }
+
+          // Set new selection and highlight it
           setSelectedFeature(feature)
           highlightFeature(e)
+          // No reset here! Let it stay highlighted
         },
       })
     },
@@ -98,19 +118,14 @@ const Map = ({ geoJSONData }: MapProps) => {
       zoom={6}
       style={{ height: '100%', width: '100%', zIndex: 0 }}>
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
       />
       {geoJSONData && (
         <GeoJSON
           data={geoJSONData}
           ref={geoJSONRef}
-          style={() => ({
-            color: '#4a83ec',
-            weight: 1,
-            fillColor: '#4a83ec',
-            fillOpacity: 0.1,
-          })}
+          style={defaultStyle}
           onEachFeature={onEachFeature}
         />
       )}
@@ -119,10 +134,10 @@ const Map = ({ geoJSONData }: MapProps) => {
           position={getFeatureCenter(selectedFeature)}
           eventHandlers={{
             remove: () => {
-              setSelectedFeature(null)
               if (geoJSONRef.current) {
                 geoJSONRef.current.resetStyle()
               }
+              setSelectedFeature(null)
             },
           }}>
           <div className='p-2'>
