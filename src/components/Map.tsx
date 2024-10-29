@@ -1,8 +1,9 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState, useEffect } from 'react'
 import { MapContainer, TileLayer, GeoJSON, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import * as turf from '@turf/turf'
+import { Geometry, GeoJsonProperties } from 'geojson'
 
 // Fix for default marker icons
 import icon from 'leaflet/dist/images/marker-icon.png'
@@ -20,26 +21,44 @@ interface MapProps {
 }
 
 const Map = ({ geoJSONData }: MapProps) => {
-  const position: [number, number] = [40.40613526012979, -111.91127570442274]
+  const position: [number, number] = [43.84458047094772, -83.03303727926591]
   const [selectedFeature, setSelectedFeature] =
     useState<GeoJSON.Feature | null>(null)
   const geoJSONRef = useRef<L.GeoJSON | null>(null)
   // Default style
-  const defaultStyle = {
-    color: '#4682B4', // Steel blue - more professional and visible on satellite
+  const defaultStyle = useCallback(
+    (feature: GeoJSON.Feature<Geometry, GeoJsonProperties>) => {
+      return {
+        color: '#000000', // border color
+        weight: 1,
+        fillColor: feature.properties?.COLOR || '#3388ff', // use COLOR from properties, fallback to default blue
+        fillOpacity: 0.5,
+      }
+    },
+    []
+  )
+
+  const selectedStyle = {
+    color: '#666666',
     weight: 2,
-    fillColor: '#6495ED', // Cornflower blue fill
-    fillOpacity: 0.2,
+    fillColor: '#ffffff',
+    fillOpacity: 0.6,
   }
 
-  // Highlight style (for hover and selection)
   const highlightStyle = {
-    weight: 3,
-    color: '#006400', // Dark green border for better visibility on satellite
-    fillColor: '#90EE90', // Light green fill that stands out but isn't too bright
-    fillOpacity: 0.4,
-    dashArray: '',
+    color: '#666666',
+    weight: 2,
+    fillColor: '#ffffff',
+    fillOpacity: 0.6,
   }
+
+  const style = useCallback(
+    (feature: GeoJSON.Feature<Geometry, GeoJsonProperties> | undefined) => {
+      if (!feature) return defaultStyle({} as GeoJSON.Feature)
+      return feature === selectedFeature ? selectedStyle : defaultStyle(feature)
+    },
+    [selectedFeature, defaultStyle]
+  )
 
   const resetHighlight = useCallback((layer: L.Layer) => {
     if (geoJSONRef.current) {
@@ -112,10 +131,19 @@ const Map = ({ geoJSONData }: MapProps) => {
     }
   }
 
+  // Add a key prop to force re-render of GeoJSON component
+  const [geoJSONKey, setGeoJSONKey] = useState(0)
+
+  // Update useEffect to reset state when geoJSONData changes
+  useEffect(() => {
+    setSelectedFeature(null)
+    setGeoJSONKey((prev) => prev + 1)
+  }, [geoJSONData])
+
   return (
     <MapContainer
       center={position}
-      zoom={6}
+      zoom={11}
       style={{ height: '100%', width: '100%', zIndex: 0 }}>
       <TileLayer
         attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
@@ -123,9 +151,10 @@ const Map = ({ geoJSONData }: MapProps) => {
       />
       {geoJSONData && (
         <GeoJSON
+          key={geoJSONKey}
           data={geoJSONData}
           ref={geoJSONRef}
-          style={defaultStyle}
+          style={style}
           onEachFeature={onEachFeature}
         />
       )}
@@ -142,7 +171,8 @@ const Map = ({ geoJSONData }: MapProps) => {
           }}>
           <div className='p-2'>
             <h3 className='font-bold mb-2 text-lg'>
-              {selectedFeature.properties?.NAME}
+              {selectedFeature.properties?.name ||
+                selectedFeature.properties?.NAME}
             </h3>
             {selectedFeature.properties?.STATE && (
               <p className='text-sm'>
@@ -151,7 +181,7 @@ const Map = ({ geoJSONData }: MapProps) => {
             )}
             {selectedFeature.properties?.acreage && (
               <p className='text-sm'>
-                Acreage: {selectedFeature.properties.acreage}
+                Acreage: {Number(selectedFeature.properties.acreage).toFixed(3)}
               </p>
             )}
           </div>
