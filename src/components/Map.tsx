@@ -4,7 +4,6 @@ import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import * as turf from '@turf/turf'
 import { Geometry, GeoJsonProperties } from 'geojson'
-
 // Fix for default marker icons
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
@@ -18,13 +17,20 @@ L.Marker.prototype.options.icon = DefaultIcon
 
 interface MapProps {
   geoJSONData: GeoJSON.FeatureCollection | null
+  selectedFeature: GeoJSON.Feature | null
+  onFeatureSelect: (feature: GeoJSON.Feature | null) => void
+  onOpenPropertiesDrawer: () => void
 }
 
-const Map = ({ geoJSONData }: MapProps) => {
+const Map = ({
+  geoJSONData,
+  selectedFeature,
+  onFeatureSelect,
+  onOpenPropertiesDrawer,
+}: MapProps) => {
   const position: [number, number] = [43.84458047094772, -83.03303727926591]
-  const [selectedFeature, setSelectedFeature] =
-    useState<GeoJSON.Feature | null>(null)
   const geoJSONRef = useRef<L.GeoJSON | null>(null)
+
   // Default style
   const defaultStyle = useCallback(
     (feature: GeoJSON.Feature<Geometry, GeoJsonProperties>) => {
@@ -32,7 +38,7 @@ const Map = ({ geoJSONData }: MapProps) => {
         color: '#000000', // border color
         weight: 1,
         fillColor: feature.properties?.COLOR || '#3388ff', // use COLOR from properties, fallback to default blue
-        fillOpacity: 0.5,
+        fillOpacity: 0.6,
       }
     },
     []
@@ -86,19 +92,12 @@ const Map = ({ geoJSONData }: MapProps) => {
           }
         },
         click: (e) => {
-          // Reset previous selection if it exists
-          if (selectedFeature && geoJSONRef.current) {
-            geoJSONRef.current.resetStyle()
-          }
-
-          // Set new selection and highlight it
-          setSelectedFeature(feature)
+          onFeatureSelect(feature)
           highlightFeature(e)
-          // No reset here! Let it stay highlighted
         },
       })
     },
-    [highlightFeature, resetHighlight, selectedFeature]
+    [highlightFeature, resetHighlight, onFeatureSelect]
   )
 
   const getFeatureCenter = (feature: GeoJSON.Feature): [number, number] => {
@@ -136,7 +135,6 @@ const Map = ({ geoJSONData }: MapProps) => {
 
   // Update useEffect to reset state when geoJSONData changes
   useEffect(() => {
-    setSelectedFeature(null)
     setGeoJSONKey((prev) => prev + 1)
   }, [geoJSONData])
 
@@ -163,10 +161,7 @@ const Map = ({ geoJSONData }: MapProps) => {
           position={getFeatureCenter(selectedFeature)}
           eventHandlers={{
             remove: () => {
-              if (geoJSONRef.current) {
-                geoJSONRef.current.resetStyle()
-              }
-              setSelectedFeature(null)
+              onFeatureSelect(null)
             },
           }}>
           <div className='p-2'>
@@ -184,6 +179,13 @@ const Map = ({ geoJSONData }: MapProps) => {
                 Acreage: {Number(selectedFeature.properties.acreage).toFixed(3)}
               </p>
             )}
+            <div className='flex justify-center mt-2'>
+              <button
+                onClick={onOpenPropertiesDrawer}
+                className='btn btn-sm bg-primary text-background hover:bg-text hover:text-primary drawer-button'>
+                Details
+              </button>
+            </div>
           </div>
         </Popup>
       )}
