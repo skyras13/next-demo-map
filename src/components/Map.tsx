@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react'
+import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react'
 import { MapContainer, TileLayer, GeoJSON, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -35,35 +35,42 @@ const Map = ({
   const defaultStyle = useCallback(
     (feature: GeoJSON.Feature<Geometry, GeoJsonProperties>) => {
       return {
-        color: '#000000', // border color
+        color: '#000000',
         weight: 1,
-        fillColor: feature.properties?.COLOR || '#3388ff', // use COLOR from properties, fallback to default blue
+        fillColor: feature.properties?.COLOR || '#3388ff',
         fillOpacity: 0.6,
       }
     },
     []
   )
 
-  const selectedStyle = {
-    color: '#666666',
-    weight: 2,
-    fillColor: '#ffffff',
-    fillOpacity: 0.6,
-  }
+  // Memoize the style objects
+  const selectedStyle = useMemo(
+    () => ({
+      color: '#666666',
+      weight: 2,
+      fillColor: '#ffffff',
+      fillOpacity: 0.6,
+    }),
+    []
+  )
 
-  const highlightStyle = {
-    color: '#666666',
-    weight: 2,
-    fillColor: '#ffffff',
-    fillOpacity: 0.6,
-  }
+  const highlightStyle = useMemo(
+    () => ({
+      color: '#666666',
+      weight: 2,
+      fillColor: '#ffffff',
+      fillOpacity: 0.6,
+    }),
+    []
+  )
 
   const style = useCallback(
     (feature: GeoJSON.Feature<Geometry, GeoJsonProperties> | undefined) => {
       if (!feature) return defaultStyle({} as GeoJSON.Feature)
       return feature === selectedFeature ? selectedStyle : defaultStyle(feature)
     },
-    [selectedFeature, defaultStyle]
+    [selectedFeature, defaultStyle, selectedStyle]
   )
 
   const resetHighlight = useCallback((layer: L.Layer) => {
@@ -72,11 +79,14 @@ const Map = ({
     }
   }, [])
 
-  const highlightFeature = useCallback((e: L.LeafletEvent) => {
-    const layer = e.target
-    layer.setStyle(highlightStyle)
-    layer.bringToFront()
-  }, [])
+  const highlightFeature = useCallback(
+    (e: L.LeafletEvent) => {
+      const layer = e.target
+      layer.setStyle(highlightStyle)
+      layer.bringToFront()
+    },
+    [highlightStyle]
+  )
 
   const onEachFeature = useCallback(
     (feature: GeoJSON.Feature, layer: L.Layer) => {
@@ -97,7 +107,7 @@ const Map = ({
         },
       })
     },
-    [highlightFeature, resetHighlight, onFeatureSelect]
+    [highlightFeature, resetHighlight, onFeatureSelect, selectedFeature]
   )
 
   const getFeatureCenter = (feature: GeoJSON.Feature): [number, number] => {

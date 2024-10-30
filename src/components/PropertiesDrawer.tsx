@@ -1,5 +1,4 @@
 import React from 'react'
-import { GeoJSON } from 'geojson'
 
 interface PropertiesDrawerProps {
   feature: GeoJSON.Feature | null
@@ -14,7 +13,7 @@ const PropertiesDrawer = ({
 }: PropertiesDrawerProps) => {
   if (!feature) return null
 
-  const formatValue = (value: any): string => {
+  const formatValue = (value: unknown): string => {
     if (typeof value === 'number') {
       return Number(value).toFixed(3)
     }
